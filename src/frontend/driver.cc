@@ -70,11 +70,11 @@ std::string driver::preprocess() {
                 poss += "\t";
             }
 
-            if (word == "starttime();") {
+            if (word == "starttime();" || word == "starttime();\r") {
                 poss += "_sysy_starttime(";
                 poss += std::to_string(line_pos);
                 poss += "); ";
-            } else if (word == "stoptime();") {
+            } else if (word == "stoptime();" || word=="stoptime();\r") {
                 poss += "_sysy_stoptime(";
                 poss += std::to_string(line_pos);
                 poss += "); ";

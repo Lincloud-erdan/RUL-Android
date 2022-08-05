@@ -152,7 +152,7 @@ void Mem2reg::rename(BasicBlock* bb) {
                                 Value* newVal = stk[temp->getVal()].top();
                                 if(typeid(*newVal) == typeid(TempVal)) {
                                     // operands[i]->setVal(newVal);
-                                    
+
                                     Use* use = new Use(newVal, ir, i);
                                     operands[i] = use;
                                     dynamic_cast<TempVal*>(newVal)->getVal()->addUse(use);
@@ -167,7 +167,7 @@ void Mem2reg::rename(BasicBlock* bb) {
                                 }
                             } else {
                                 stk[temp->getVal()].push(temp);
-                                
+
                                 Use* use = new Use(temp, ir, i);
                                 operands[i] = use;
                                 temp->getVal()->addUse(use);
@@ -177,7 +177,7 @@ void Mem2reg::rename(BasicBlock* bb) {
                 }
             }
         }
-        
+
         if(operands.size() > 0 && operands[0]->getVal() && !operands[0]->getVal()->is_Array() && find(irVisitor->globalVars.begin(), irVisitor->globalVars.end(), operands[0]->getVal()) == end(irVisitor->globalVars)) {
             Value* val = operands[0]->getVal(), *newVal = nullptr;
             if(typeid(*(val)) == typeid(VarValue)) {
@@ -327,7 +327,7 @@ void Mem2reg::constValBroadcast() {
                         }
                     }
 
-                    
+
                 }
 
                 if(typeid(*inst) == typeid(StoreIIR) && !inst->getOperands()[0]->getVal()->is_Array()) {
@@ -355,8 +355,8 @@ void Mem2reg::constValBroadcast() {
                             }
                             // }
                         }
-                        
-                        // 此处混杂了拷贝传播
+
+                            // 此处混杂了拷贝传播
                         else if(temp->getVal()) {
                             // sir->deleteIR();
 
@@ -554,7 +554,7 @@ void Mem2reg::constValBroadcast() {
                         TempVal* newTemp = new TempVal();
                         newTemp->setInt(resultInt);
                         newTemp->setType(new Type(TypeID::INT));
-                        
+
                         Value* val = res->getVal();
                         for(auto use : val->getUses()) {
                             if(typeid(*(use->getVal())) != typeid(TempVal)) {
@@ -607,7 +607,7 @@ void Mem2reg::constValBroadcast() {
                         TempVal* newTemp = new TempVal();
                         newTemp->setFloat(resultFloat);
                         newTemp->setType(new Type(TypeID::FLOAT));
-                        
+
                         Value* val = res->getVal();
                         for(auto use : val->getUses()) {
                             if(typeid(*(use->getVal())) != typeid(TempVal)) {
@@ -702,7 +702,7 @@ std::vector<std::vector<Instruction*>::iterator>* Mem2reg::findPublicExp(std::ve
         if(dynamic_cast<ArithmeticIR*>(*iter)) {
             ArithmeticIR* iterInst = dynamic_cast<ArithmeticIR*>(*iter);
             TempVal* iterLeft = dynamic_cast<TempVal*>(iterInst->getOperands()[1]->getVal()), *iterRight = dynamic_cast<TempVal*>(iterInst->getOperands()[2]->getVal());
-            
+
             if(!left->getVal() && !iterLeft->getVal() && left->getConst() == iterLeft->getConst() && !right->getVal() && !iterRight->getVal() && right->getConst() == iterRight->getConst()) {
                 vec->push_back(iter);
             }
@@ -821,30 +821,31 @@ void Mem2reg::copyBroadcast() {
                     auto operands = user->getOperands();
                     if(operands[0]->getVal()) {
                         for(auto nextUse : operands[0]->getVal()->getUses()) {
-                            if(typeid(*(nextUse->getVal())) != typeid(TempVal)) {
-                                nextUse->getVal()->killUse(nextUse);
-                            }
-
                             auto val = nextUse->getVal();
                             if(dynamic_cast<TempVal*>(val)) {
-                                for(auto nextNextUse : dynamic_cast<TempVal*>(val)->getVal()->getUses()) {
-                                    if(typeid(*(nextNextUse->getVal())) == typeid(TempVal)) {
-                                        dynamic_cast<TempVal*>(nextNextUse->getVal())->setVal(newDst);
-                                    }
-                                    else nextNextUse->setVal(newDst);
-                                    newDst->addUse(nextNextUse);
-                                }
+                                // for(auto nextNextUse : dynamic_cast<TempVal*>(val)->getVal()->getUses()) {
+                                //     if(typeid(*(nextNextUse->getVal())) == typeid(TempVal)) {
+                                dynamic_cast<TempVal*>(val)->setVal(newDst);
+                                // }
+                                // else nextNextUse->setVal(newDst);
+                                newDst->addUse(nextUse);
+                                // }
                                 // newDst->Uses.insert(dynamic_cast<TempVal*>(val)->getVal()->getUses().begin(), dynamic_cast<TempVal*>(val)->getVal()->getUses().end())
                             }
                             else {
-                                for(auto nextNextUse : val->getUses()) {
-                                    if(typeid(*(nextNextUse->getVal())) == typeid(TempVal)) {
-                                        dynamic_cast<TempVal*>(nextNextUse->getVal())->setVal(newDst);
-                                    }
-                                    else nextNextUse->setVal(newDst);
-                                    newDst->addUse(nextNextUse);
-                                }
+                                // for(auto nextNextUse : val->getUses()) {
+                                //     if(typeid(*(nextNextUse->getVal())) == typeid(TempVal)) {
+                                //     dynamic_cast<TempVal*>(nextNextUse->getVal())->setVal(newDst);
+                                // }
+                                // else
+                                nextUse->setVal(newDst);
+                                newDst->addUse(nextUse);
+                                // }
                                 // newDst->Uses.insert(val->getUses().begin(), val->getUses().end())
+                            }
+
+                            if(typeid(*val) != typeid(TempVal)) {
+                                nextUse->getVal()->killUse(nextUse);
                             }
                         }
                     }
@@ -856,19 +857,19 @@ void Mem2reg::copyBroadcast() {
             // else if(dynamic_cast<StoreIR*>(inst) && !inst->getOperands()[0]->getVal()->is_Array()) {
             //     StoreIR* sir = dynamic_cast<StoreIR*>(inst);
             //     TempVal* temp = dynamic_cast<TempVal*>(sir->getOperands()[1]->getVal());
-                
+
             //     if(temp->getVal() && find(irVisitor->globalVars.begin(), irVisitor->globalVars.end(), sir->getOperands()[0]->getVal()) == end(irVisitor->globalVars)) {
             //     for(auto use : sir->getOperands()[0]->getVal()->getUses()) {
             //         User* user = use->getUser();
             //         if(dynamic_cast<LoadIR*>(user)) {
             //             LoadIR* lir = dynamic_cast<LoadIR*>(user);
             //             lir->deleteIR();
-                        
+
             //             Value* v1 = lir->getOperands()[0]->getVal();
             //             lir->getOperands()[1]->getVal()->killUse(lir->getOperands()[1]);
             //             for(auto nextUse : v1->getUses()) {
             //                 User* nextUser = nextUse->getUser();
-                            
+
             //             }
             //         }
             //     }

@@ -76,6 +76,11 @@ void moveBackOperand(IrVisitor* iv) {
                         callIr->args[i - 1] = *(dynamic_cast<TempVal*>(callIr->getOperands()[i]->getVal()));
                     }
                 }
+                else if(dynamic_cast<PhiIR*>(ir)) {
+                    PhiIR* phiIr = dynamic_cast<PhiIR*>(ir);
+                    auto& operands = phiIr->getOperands();
+                    phiIr->dst = operands[0]->getVal();
+                }
             }
         }
     }
